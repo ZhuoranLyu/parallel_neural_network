@@ -23,9 +23,8 @@ double *multiply(double *x, double *y, int n){
 }
 
 /* x is of n * 1, y is of 1 * k */
-double **dot(double *x, double *y, int n, int k){
-	int i;
-	int j;
+double **arrayDot(double *x, double *y, int n, int k){
+	int i, j;
 	double **result = calloc(n, sizeof(double*));
 	for(i = 0; i < n; i++){
 		result[i] = calloc(k, sizeof(double));
@@ -38,6 +37,24 @@ double **dot(double *x, double *y, int n, int k){
 	return result;
 }
 
+/* x is of n * m, y is of m * k */
+double **dot(double **x, double **y, int n, int m, int k){
+	int i, j, a;
+	double **result = calloc(n, sizeof(double*));
+	for(i = 0; i < n; i++){
+		result[i] =calloc(k, sizeof(double));
+	}
+	for(i = 0; i < n; i++){
+		for(j = 0; j < k; j++){
+
+			for(a = 0; a < m; a++){
+				result[i][j] += x[i][a] * y[a][j];
+			}
+
+		}
+	}
+	return result;
+}
 /* x is of m*n, y is of m*k, result should be n*k */
 double **transDot(double **x, double **y, int n, int m, int k){
 	int i;
@@ -77,6 +94,7 @@ double **sigForward1(double **x, int n, int k){
 			result[i][j] = sigmoid(x[i][j]);
 		}
 	}
+	return result;
 }
 
 /*x is of n*k, y is of k*1 */
@@ -97,5 +115,42 @@ double* sigForward2(double *x, int n){
 	for(i = 0; i < n; i++){
 		result[i] = sigmoid(x[i]);
 	}
+	return result;
+}
 
+void print_matrix(double **x, int n, int m){
+	int i, j;
+	for(i = 0; i < n; i++){
+		for(j = 0; j < m; j ++){
+			printf("  %f", x[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+int main(int argc, char **argv){
+	int i, j;
+	double **m1 = calloc(5, sizeof(double *));
+	for(i = 0; i < 5; i++){
+		m1[i] = calloc(2, sizeof(double));
+	}
+	for(i = 0; i < 5; i++){
+		for(j = 0; j < 2; j++){
+			m1[i][j] = 3 * j;
+		}
+	}
+	print_matrix(m1, 5, 2);
+
+	double **m2 = calloc(2, sizeof(double *));
+	for(i = 0; i < 2; i++){
+		m2[i] = calloc(3, sizeof(double));
+	}
+	for(i = 0; i < 2; i++){
+		for(j = 0; j < 3; j++){
+			m2[i][j] = 2 * i;
+		}
+	}
+	print_matrix(m2, 2, 3);
+	print_matrix(dot(m1, m2, 5, 2, 3), 5, 3);
+	return 0;
 }
