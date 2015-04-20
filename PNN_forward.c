@@ -36,6 +36,17 @@ double **arrayDot(double *x, double *y, int n, int k){
 	}
 	return result;
 }
+ /*x is of n*k, y is of n*1 */
+double *arrayTranDot(double **x, double *y, int n, int k){
+	int i, j;
+	double *result = calloc(k, sizeof(double));
+	for(i = 0; i < k; i++){
+		for(j = 0; j < n; j++){
+			result[i] += x[j][i] * y[j];
+		}
+	}
+	return result;
+}
 
 /* x is of n * m, y is of m * k */
 double **dot(double **x, double **y, int n, int m, int k){
