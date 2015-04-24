@@ -6,7 +6,7 @@ int main(int argc, char **argv){
 
 	double** X; // input matrix, n by m
 	int n; // example size
-	int m = readMatrix(argv[1],X); // input layer size
+	int m = readMatrix(argv[1],X)[1]; // input layer size
 	int k; // hidden layer size
 
 	int i,j;

@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 //returns number of rows in matrix.
-int readMatrix(char* filename,double **X){
+int* readMatrix(char* filename,double **X){
   FILE *fp;
   fp = fopen(filename,"r");
   if (fp == NULL) {
     printf("ERROR: unable to read file.\n");
-    return -1;
+    return NULL;
   }
   char* line = NULL;
   size_t len = 0; //line length
@@ -17,11 +18,15 @@ int readMatrix(char* filename,double **X){
   //two passes, first pass to determine number of lines and line length
   // second pass to determine line length
 
+  int passed = 0;
   while (getline(&line,&len,fp) != -1) {
+    if (passed == 0) {
     char* elts = strtok(line," ,\t");
     while (elts != NULL) {
       lineLen++;
-      strtok(NULL," ,\t");
+      elts = strtok(NULL," ,\t");
+    }
+    passed = 1;
     }
     linenum++;
   }
@@ -35,12 +40,13 @@ int readMatrix(char* filename,double **X){
   for (i = 0;i<linenum;i++) {
     getline(&line,&len,fp);
     char* elts = strtok(line," ,\t");
-    for (j=0;j<lenLen;j++) {
+    for (j=0;j<lineLen;j++) {
       X[i][j] = strtod(elts,NULL);
-      strtok(NULL," ,\t");
+      elts = strtok(NULL," ,\t");
     }
   }
   fclose(fp);
-
-  return linenum;
+  int* dimpair = calloc(2,sizeof(int));
+  dimpair[0] = lineLen; dimpair[1] = linenum;
+  return dimpair;
 }
