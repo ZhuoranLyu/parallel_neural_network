@@ -4,17 +4,16 @@
 
 int main(int argc, char **argv){
 
+	double** X; // input matrix, n by m
 	int n; // example size
-	int m; // input layer size
+	int m = readMatrix(argv[1],X); // input layer size
 	int k; // hidden layer size
 
 	int i,j;
 
-	double** X; // input matrix, n by m
 	double* y // output, n by 1
-	
+
 	double J; // cost
-	double** W; // weight matrix, m+1 by k
 	double** z2; // n by k
 	double** a2; // n by k
 	double* z3; // n by 1
