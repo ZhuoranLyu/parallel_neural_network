@@ -2,194 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 
-// helper functions
-
-double sigmoidPrime(double x){
-	double y = exp(-x)/pow((1 + exp(-x)), 2.0);
-	return y;
-}
-
-double sigmoid(double x){
-	double y = 1 / (1 + exp(-x));
-	return y;
-}
-
-/* Multiplication of two n*m matrices */
-double *multiply(double *x, double *y, int n){
-	int i;
-	double *result = calloc(n, sizeof(double));
-	for(i = 0; i < n; i++){
-		result[i] = x[i] * y[i];
-	}
-	return result;
-}
-
-/* x is of n * 1, y is of 1 * k */
-double **arrayDot(double *x, double *y, int n, int k){
-	int i, j;
-	double **result = calloc(n, sizeof(double*));
-	for(i = 0; i < n; i++){
-		result[i] = calloc(k, sizeof(double));
-	}
-	for(i = 0; i < n; i++){
-		for(j = 0; j < k; j++){
-			result[i][j] = x[i] * y[j];
-		}
-	}
-	return result;
-}
-
-/* x is of n * m, y is of m * k */
-double **dot(double **x, double **y, int n, int m, int k){
-	int i, j, a;
-	double **result = calloc(n, sizeof(double*));
-	for(i = 0; i < n; i++){
-		result[i] =calloc(k, sizeof(double));
-	}
-	for(i = 0; i < n; i++){
-		for(j = 0; j < k; j++){
-
-			for(a = 0; a < m; a++){
-				result[i][j] += x[i][a] * y[a][j];
-			}
-
-		}
-	}
-	return result;
-}
-/* x is of m*n, y is of m*k, result should be n*k */
-double **transDot(double **x, double **y, int n, int m, int k){
-	int i;
-	int j;
-	int a;
-	double **result = calloc(n, sizeof(double*));
-	for(i = 0; i < n; i++){
-		result[i] = calloc(k, sizeof(double));
-	}
-	for(i = 0; i < n; i++){
-		for(j = 0; j < k; j++){
-			for(a = 0; a < m; a++){
-				result[i][j] += x[a][i] * y[a][j];
-			}
-		}
-	}
-	return result;
-}
-
- /*x is of n*k, y is of n*1 */
-double *arrayTranDot(double **x, double *y, int n, int k){
-	int i, j;
-	double *result = calloc(k, sizeof(double));
-	for(i = 0; i < k; i++){
-		for(j = 0; j < n; j++){
-			result[i] += x[j][i] * y[j];
-		}
-	}
-	return result;
-}
-
-void printMatrix(double **x, int n, int m){
-	int i, j;
-	for(i = 0; i < n; i++){
-		for(j = 0; j < m; j ++){
-			printf("  %f", x[i][j]);
-		}
-		printf("\n");
-	}
-}
-
-
-// forward propagation
-
-/*  x is of n*m;
-	w is of (m+1) * k
-*/
-double **forward1(double **x, double **w, int n, int m, int k){
-	double ** result = dot(x, w, n, m, k);
-	return result;
-}
-
-/* x is of n*k */
-double **sigForward1(double **x, int n, int k){
-	int i, j;
-	double **result = calloc(n, sizeof(double *));
-	for(i = 0; i < n; i++){
-		result[i] = calloc(k, sizeof(double));
-	}
-	for(i = 0; i < n; i++){
-		for(j = 0; j < k; j++){
-			result[i][j] = sigmoid(x[i][j]);
-		}
-	}
-	return result;
-}
-
-/*x is of n*k, y is of k*1 */
-double *forward2(double **x, double *y, int n, int k){
-	int i, j;
-	double *result = calloc(n, sizeof(double));
-	for(i = 0; i < n; i++){
-		for(j = 0; j < k; j++){
-			result[i] += x[i][j] * y[j];
-		}
-	}
-	return result;
-}
-
-double* sigForward2(double *x, int n){
-	int i;
-	double *result = calloc(n, sizeof(double));
-	for(i = 0; i < n; i++){
-		result[i] = sigmoid(x[i]);
-	}
-	return result;
-}
-
-
-// back propagation
-
-double costFunction(double* yHat, double* y, int n){
-	double J = 0;
-	int i = 0;
-	for (i = 0; i < n; i++){
-		J += (y[i]- yHat[i]) * (y[i]- yHat[i]);
-	}
-	return 0.5*J;
-}
-
-double** costFunctionPrime(double* yHat, double* y, double** z2, double* z3, double** a2, double** W, double** X,int n, int k, int m){
-	int i, j;
-	double* delta3; // n by 1
-	double* dJdW2; // k by 1
-	double** delta2; // n by k
-	double** dJdW1; // m by k
-	double** dJdW = calloc(m+1, sizeof(double*)); // m+1 by k
-	double* temp = calloc(n, sizeof(double)); // store temp value for y
-
-	for (i = 0; i < n; i++){
-		temp[i] = - (y[i] - yHat[i]);
-		z3[i] = sigmoidPrime(z3[i]);
-	}
-	delta3 = multiply(temp, z3, n);
-
-	dJdW2 = arrayTranDot(a2, delta3, n, k);
-	
-	delta2 = arrayDot(delta3, W[m], n, k);
-
-	for (i = 0; i < n; i++){
-		for (j = 0; j < k; j++){
-			delta2[i][j] *= sigmoidPrime(z2[i][j]);
-		}
-	}
-
-	dJdW1 = transDot(X, delta2, m, n, k);
-	for (i = 0; i < m; i++){
-		dJdW[i] = dJdW1[i];
-	}
-	dJdW[m] = dJdW2;
-	return dJdW;
-}
-
+#include "forwardProp.h"
+#include "backProp.h"
 
 int main(int argc, char **argv){
 
@@ -319,28 +133,14 @@ int main(int argc, char **argv){
 		//printf("%f, %f, %f\n", y[0], y[1], y[2]);     
 		
 		J = costFunction(yHat, y, n);
-		//printf("%f\n", J);
 
 		dJdW = costFunctionPrime(yHat, y, z2, z3, a2, W, X, n, k, m);
 		for (i = 0; i < m+1; i++){
 			for (j = 0; j < k; j++){
-						//printf("%.10f, ", dJdW[i][j]);
 				W[i][j] -=  step * dJdW[i][j];
 			}
-				//printf("\n");
 		}
-		//printf("\n");
-		/*
-		for (i = 0; i < m+1; i++){
-			for (j = 0; j < k; j++){
-						//printf("%.10f, ", W[i][j]);
-						//W[i][j] -=  dJdW[i][j];
-			}
-				//printf("\n");
-		}
-		*/
-		//printf("\n");
+		
 		printf("%.10f\n", J);
 	}
-//}
 }

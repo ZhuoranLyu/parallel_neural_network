@@ -1,6 +1,4 @@
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "forwardProp.h"
 
 double sigmoidPrime(double x){
 	double y = exp(-x)/pow((1 + exp(-x)), 2.0);
@@ -32,17 +30,6 @@ double **arrayDot(double *x, double *y, int n, int k){
 	for(i = 0; i < n; i++){
 		for(j = 0; j < k; j++){
 			result[i][j] = x[i] * y[j];
-		}
-	}
-	return result;
-}
- /*x is of n*k, y is of n*1 */
-double *arrayTranDot(double **x, double *y, int n, int k){
-	int i, j;
-	double *result = calloc(k, sizeof(double));
-	for(i = 0; i < k; i++){
-		for(j = 0; j < n; j++){
-			result[i] += x[j][i] * y[j];
 		}
 	}
 	return result;
@@ -85,7 +72,32 @@ double **transDot(double **x, double **y, int n, int m, int k){
 	return result;
 }
 
-/*	x is of n*m;
+ /*x is of n*k, y is of n*1 */
+double *arrayTranDot(double **x, double *y, int n, int k){
+	int i, j;
+	double *result = calloc(k, sizeof(double));
+	for(i = 0; i < k; i++){
+		for(j = 0; j < n; j++){
+			result[i] += x[j][i] * y[j];
+		}
+	}
+	return result;
+}
+
+void printMatrix(double **x, int n, int m){
+	int i, j;
+	for(i = 0; i < n; i++){
+		for(j = 0; j < m; j ++){
+			printf("  %f", x[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+
+// forward propagation
+
+/*  x is of n*m;
 	w is of (m+1) * k
 */
 double **forward1(double **x, double **w, int n, int m, int k){
@@ -129,39 +141,3 @@ double* sigForward2(double *x, int n){
 	return result;
 }
 
-void print_matrix(double **x, int n, int m){
-	int i, j;
-	for(i = 0; i < n; i++){
-		for(j = 0; j < m; j ++){
-			printf("  %f", x[i][j]);
-		}
-		printf("\n");
-	}
-}
-
-int main(int argc, char **argv){
-	int i, j;
-	double **m1 = calloc(5, sizeof(double *));
-	for(i = 0; i < 5; i++){
-		m1[i] = calloc(2, sizeof(double));
-	}
-	for(i = 0; i < 5; i++){
-		for(j = 0; j < 2; j++){
-			m1[i][j] = 3 * j;
-		}
-	}
-	print_matrix(m1, 5, 2);
-
-	double **m2 = calloc(2, sizeof(double *));
-	for(i = 0; i < 2; i++){
-		m2[i] = calloc(3, sizeof(double));
-	}
-	for(i = 0; i < 2; i++){
-		for(j = 0; j < 3; j++){
-			m2[i][j] = 2 * i;
-		}
-	}
-	print_matrix(m2, 2, 3);
-	print_matrix(dot(m1, m2, 5, 2, 3), 5, 3);
-	return 0;
-}
