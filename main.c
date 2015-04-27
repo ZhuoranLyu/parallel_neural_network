@@ -101,7 +101,7 @@ void printMatrix(double **x, int n, int m){
 
 // forward propagation
 
-/*	x is of n*m;
+/*  x is of n*m;
 	w is of (m+1) * k
 */
 double **forward1(double **x, double **w, int n, int m, int k){
@@ -193,15 +193,70 @@ double** costFunctionPrime(double* yHat, double* y, double** z2, double* z3, dou
 
 int main(int argc, char **argv){
 
-	int n = 3; // example size
-	int m = 2; // input layer size
-	int k = 3; // hidden layer size
+	int n; // example size
+	int m; // input layer size
+	int k = 15; // hidden layer size
 
 	int i,j,p;
 
 	double** X; // input matrix, n by m
 	double* y; // output, n by 1
 	
+	 //read the matrix from file
+	FILE *fp;
+	char *filename = "pendigits.tra";
+	fp = fopen(filename,"r");
+	if (fp == NULL) {
+		printf("ERROR: unable to read file.\n");
+		return -1;
+	}
+	char* line = NULL;
+	size_t len = 0; //line length
+	int lineLen = 0; //matrix length
+	int lineNum = 0; //matrix height
+	int passed = 0;
+
+	//two passes, first pass to determine number of lines and line length
+	// second pass to determine line length
+
+	while (getline(&line,&len,fp) != -1) {
+		if (passed == 0) {
+			char* elts = strtok(line," ,\t");
+			while (elts != NULL) {
+				lineLen++;
+				elts = strtok(NULL," ,\t");
+			}
+			passed = 1;
+			free(elts);
+		}
+		lineNum++;
+	}
+	fclose(fp);
+
+	//open again for pass 2
+	fp = fopen(filename,"r");
+	X = malloc(sizeof(double)*(lineLen-1)*lineNum);
+	y = malloc(sizeof(double)*lineNum);
+
+	for (i = 0;i<lineNum;i++) {
+		X[i] = malloc(sizeof(double)*lineLen);
+	}
+	for (i = 0;i<lineNum;i++) {
+		getline(&line,&len,fp);
+		char* elts = strtok(line," ,\t");
+		for (j=0;j<lineLen-1;j++) {
+			X[i][j] = strtod(elts,NULL);
+			elts = strtok(NULL," ,\t");
+		}
+		y[i] = strtod(elts,NULL);
+		elts = strtok(NULL," ,\t");
+		free(elts);
+	}
+	fclose(fp);
+
+	n = lineNum; // example size
+	m = lineLen;
+
 	double J = 10.; // cost
 	double** W; // weight matrix, m+1 by k
 	double** z2; // n by k
@@ -213,33 +268,36 @@ int main(int argc, char **argv){
 	// below should be in the while loop
 
 	double threshold = 1;
-	double step = 0.5;
+	double step = 5;
 
-	X = calloc(n, sizeof(double*));
-	for (i = 0; i < n; i++){
-		X[i] = calloc(m, sizeof(double));
-	}
-	// init
 
-	X[0][0] = 3.;
-	X[0][1] = 5.;
-	X[1][0] = 5.;
-	X[1][1] = 1.;
-	X[2][0] = 10.;
-	X[2][1] = 2.;
-
-	y = calloc(n, sizeof(double));
-	y[0] = 75.;
-	y[1] = 82.;
-	y[2] = 93.;
-
-	// normalize
-	for (i = 0; i < 3; i++){
-		for (j = 0; j < 2; j++){
-			X[i][j] /= 10.;
+/*
+		X = calloc(n, sizeof(double*));
+		for (i = 0; i < n; i++){
+			X[i] = calloc(m, sizeof(double));
 		}
-		y[i] /= 100.;
-	}
+		// init
+
+		X[0][0] = 3.;
+		X[0][1] = 5.;
+		X[1][0] = 5.;
+		X[1][1] = 1.;
+		X[2][0] = 10.;
+		X[2][1] = 2.;
+
+		y = calloc(n, sizeof(double));
+		y[0] = 75.;
+		y[1] = 82.;
+		y[2] = 93.;
+
+		// normalize
+		for (i = 0; i < 3; i++){
+			for (j = 0; j < 2; j++){
+				X[i][j] /= 10.;
+			}
+			y[i] /= 100.;
+		}
+*/
 
 	W = calloc(m+1, sizeof(double*)); // m+1 by k
 	for (i = 0; i < m+1; i++){
@@ -252,13 +310,13 @@ int main(int argc, char **argv){
 	}
 
 	//while(J > threshold){
-	for (p = 0; p < 1000; p++){
+	for (p = 0; p < 100000; p++){
 		z2 = forward1(X, W, n, m, k); // n by k
 		a2 = sigForward1(z2, n, k); // n by k
 		z3 = forward2(a2, W[m], n, k); // n by 1
 		yHat = sigForward2(z3, n); // n by 1
-		//printf("%f, %f, %f\n", yHat[0], yHat[1], yHat[2]);		
-		//printf("%f, %f, %f\n", y[0], y[1], y[2]);		
+		//printf("%f, %f, %f\n", yHat[0], yHat[1], yHat[2]);        
+		//printf("%f, %f, %f\n", y[0], y[1], y[2]);     
 		
 		J = costFunction(yHat, y, n);
 		//printf("%f\n", J);
@@ -266,25 +324,23 @@ int main(int argc, char **argv){
 		dJdW = costFunctionPrime(yHat, y, z2, z3, a2, W, X, n, k, m);
 		for (i = 0; i < m+1; i++){
 			for (j = 0; j < k; j++){
-				//printf("%.10f, ", dJdW[i][j]);
-				W[i][j] -=  dJdW[i][j];
+						//printf("%.10f, ", dJdW[i][j]);
+				W[i][j] -=  step * dJdW[i][j];
 			}
-			//printf("\n");
+				//printf("\n");
 		}
 		//printf("\n");
-
+		/*
 		for (i = 0; i < m+1; i++){
 			for (j = 0; j < k; j++){
-				//printf("%.10f, ", W[i][j]);
-				//W[i][j] -=  dJdW[i][j];
+						//printf("%.10f, ", W[i][j]);
+						//W[i][j] -=  dJdW[i][j];
 			}
-			//printf("\n");
+				//printf("\n");
 		}
+		*/
 		//printf("\n");
 		printf("%.10f\n", J);
 	}
-
-	//}
-	
-
+//}
 }
