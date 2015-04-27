@@ -4,18 +4,20 @@
 
 #include "forwardProp.h"
 #include "backProp.h"
+//#include "dataReader.h"
 
 int main(int argc, char **argv){
 
 	int n; // example size
 	int m; // input layer size
-	int k = 15; // hidden layer size
+	int k = 12; // hidden layer size
 
 	int i,j,p;
 
 	double** X; // input matrix, n by m
 	double* y; // output, n by 1
 	
+	srand(time(NULL));
 	 //read the matrix from file
 	FILE *fp;
 	char *filename = "pendigits.tra";
@@ -24,6 +26,7 @@ int main(int argc, char **argv){
 		printf("ERROR: unable to read file.\n");
 		return -1;
 	}
+
 	char* line = NULL;
 	size_t len = 0; //line length
 	int lineLen = 0; //matrix length
@@ -71,6 +74,16 @@ int main(int argc, char **argv){
 	n = lineNum; // example size
 	m = lineLen;
 
+	// Normalize the data
+	for (i = 0; i < n; i++){
+		for (j = 0; j < m; j++){
+			X[i][j] /= 100.;
+		}
+		y[i] /= 10.;
+	}
+
+
+
 	double J = 10.; // cost
 	double** W; // weight matrix, m+1 by k
 	double** z2; // n by k
@@ -79,11 +92,9 @@ int main(int argc, char **argv){
 	double* yHat; // estimate output, n by 1
 
 	double** dJdW; // combined dJdW1 and dJdW2, m+1 by k
-	// below should be in the while loop
 
 	double threshold = 1;
-	double step = 5;
-
+	double step = 0.5;
 
 /*
 		X = calloc(n, sizeof(double*));
@@ -119,7 +130,7 @@ int main(int argc, char **argv){
 	}
 	for (i = 0; i< m+1; i++){
 		for (j = 0; j < k; j++){
-			W[i][j] = 1.;
+			W[i][j] = (double)rand() / RAND_MAX;
 		}
 	}
 
@@ -129,9 +140,7 @@ int main(int argc, char **argv){
 		a2 = sigForward1(z2, n, k); // n by k
 		z3 = forward2(a2, W[m], n, k); // n by 1
 		yHat = sigForward2(z3, n); // n by 1
-		//printf("%f, %f, %f\n", yHat[0], yHat[1], yHat[2]);        
-		//printf("%f, %f, %f\n", y[0], y[1], y[2]);     
-		
+
 		J = costFunction(yHat, y, n);
 
 		dJdW = costFunctionPrime(yHat, y, z2, z3, a2, W, X, n, k, m);
@@ -141,6 +150,6 @@ int main(int argc, char **argv){
 			}
 		}
 		
-		printf("%.10f\n", J);
+		printf("%.15f\n", J);
 	}
 }
