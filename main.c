@@ -52,12 +52,13 @@ int main(int argc, char **argv){
 
 	//open again for pass 2
 	fp = fopen(filename,"r");
-	X = malloc(sizeof(double)*(lineLen-1)*lineNum);
-	y = malloc(sizeof(double)*lineNum);
+	X = calloc(lineNum, sizeof(double*));
+	y = calloc(lineNum, sizeof(double));
 
 	for (i = 0;i<lineNum;i++) {
-		X[i] = malloc(sizeof(double)*lineLen);
+		X[i] = calloc((lineLen-1), sizeof(double));
 	}
+
 	for (i = 0;i<lineNum;i++) {
 		getline(&line,&len,fp);
 		char* elts = strtok(line," ,\t");
@@ -72,7 +73,7 @@ int main(int argc, char **argv){
 	fclose(fp);
 
 	n = lineNum; // example size
-	m = lineLen;
+	m = lineLen - 1;
 
 	// Normalize the data
 	for (i = 0; i < n; i++){
@@ -81,8 +82,6 @@ int main(int argc, char **argv){
 		}
 		y[i] /= 10.;
 	}
-
-
 
 	double J = 10.; // cost
 	double** W; // weight matrix, m+1 by k
@@ -94,62 +93,73 @@ int main(int argc, char **argv){
 	double** dJdW; // combined dJdW1 and dJdW2, m+1 by k
 
 	double threshold = 1;
-	double step = 0.5;
+	double step = 1;
 
-/*
-		X = calloc(n, sizeof(double*));
-		for (i = 0; i < n; i++){
-			X[i] = calloc(m, sizeof(double));
-		}
-		// init
+	double** deltaW;
+	double** b1;
+	double* b2;
 
-		X[0][0] = 3.;
-		X[0][1] = 5.;
-		X[1][0] = 5.;
-		X[1][1] = 1.;
-		X[2][0] = 10.;
-		X[2][1] = 2.;
-
-		y = calloc(n, sizeof(double));
-		y[0] = 75.;
-		y[1] = 82.;
-		y[2] = 93.;
-
-		// normalize
-		for (i = 0; i < 3; i++){
-			for (j = 0; j < 2; j++){
-				X[i][j] /= 10.;
-			}
-			y[i] /= 100.;
-		}
-*/
-
+	// Init bias and weights for the network
 	W = calloc(m+1, sizeof(double*)); // m+1 by k
+	
+	deltaW = calloc(m+1, sizeof(double*)); // m+1 by k
+
 	for (i = 0; i < m+1; i++){
 		W[i] = calloc(k, sizeof(double));
+		deltaW[i] = calloc(k, sizeof(double));	
 	}
+
 	for (i = 0; i< m+1; i++){
 		for (j = 0; j < k; j++){
 			W[i][j] = (double)rand() / RAND_MAX;
+			deltaW[i][j] = 0.;
 		}
 	}
 
 	//while(J > threshold){
-	for (p = 0; p < 100000; p++){
+	for (p = 0; p < 2000; p++){
 		z2 = forward1(X, W, n, m, k); // n by k
-		a2 = sigForward1(z2, n, k); // n by k
-		z3 = forward2(a2, W[m], n, k); // n by 1
-		yHat = sigForward2(z3, n); // n by 1
 
+		a2 = sigForward1(z2, n, k); // n by k
+
+		z3 = forward2(a2, W[m], n, k); // n by 1
+
+		yHat = sigForward2(z3, n); // n by 1
+		
 		J = costFunction(yHat, y, n);
 
 		dJdW = costFunctionPrime(yHat, y, z2, z3, a2, W, X, n, k, m);
+
+		for (i = 0; i < n; i++){
+			free(z2[i]);
+		}
+		free(z2);
+		for (i = 0; i < n; i++){
+			free(a2[i]);
+		}
+		free(a2);
+		free(z3);
+		free(yHat);
+
 		for (i = 0; i < m+1; i++){
 			for (j = 0; j < k; j++){
-				W[i][j] -=  step * dJdW[i][j];
+				deltaW[i][j] = - 0.001 * dJdW[i][j] + 0.1 * deltaW[i][j];
+				W[i][j] += deltaW[i][j];
 			}
 		}
-		
-		printf("%.15f\n", J);
+
+		for (i = 0; i < m+1; i++){
+			free(dJdW[i]);
+		}
+		free(dJdW);
+
+		if (p % 10 == 0)
+			printf("%.15f\n", J);
+	}
+	for (i = 0; i < m+1; i++){
+		for (j = 0; j < k; j++){
+			printf("%f, ", W[i][j]);
+		}
+		printf("\n");
 	}
 }

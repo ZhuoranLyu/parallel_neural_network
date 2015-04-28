@@ -36,10 +36,25 @@ double** costFunctionPrime(double* yHat, double* y, double** z2, double* z3, dou
 	}
 
 	dJdW1 = transDot(X, delta2, m, n, k);
+
 	for (i = 0; i < m; i++){
 		dJdW[i] = dJdW1[i];
 	}
 	dJdW[m] = dJdW2;
+
+	free(delta3);
+	//free(dJdW2);
+	for(i = 0; i < n; i++){
+		free(delta2[i]);
+	}
+	free(delta2);
+	/*
+	for(i = 0; i < m; i++){
+		free(dJdW1[i]);
+	}
+	*/
+	free(dJdW1);
+	free(temp);
 	return dJdW;
 }
 
