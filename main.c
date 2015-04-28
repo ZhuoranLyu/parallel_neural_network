@@ -117,7 +117,7 @@ int main(int argc, char **argv){
 	}
 
 	//while(J > threshold){
-	for (p = 0; p < 2000; p++){
+	for (p = 0; p < 5000; p++){
 		z2 = forward1(X, W, n, m, k); // n by k
 
 		a2 = sigForward1(z2, n, k); // n by k
